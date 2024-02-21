@@ -1,0 +1,45 @@
+create table employees(
+    id serial primary key not null,
+    email varchar,
+    address varchar,
+    patronymic varchar,
+    last_name varchar,
+    first_name varchar,
+    is_admin bool default false,
+    is_staff bool default true,
+    username varchar UNIQUE not null ,
+    password varchar not null
+);
+
+CREATE TABLE category_types(
+    id serial primary key not null,
+    category_type varchar
+);
+
+CREATE TABLE category(
+    id SERIAL PRIMARY KEY NOT NULL,
+    category_name varchar,
+    category_type_id INT REFERENCES category_types(ID)
+);
+
+CREATE TABLE providers(
+    id SERIAL PRIMARY KEY NOT NULL,
+    provider_name varchar,
+    company_name varchar
+);
+
+CREATE TABLE drugs(
+    id SERIAL PRIMARY KEY NOT NULL,
+    drug_name varchar,
+    category_id INT REFERENCES category(id),
+    provider_id INT REFERENCES providers(id),
+    description varchar,
+    count INT,
+    photo bytea
+);
+
+-- alter table employees alter column is_admin set default false;
+-- alter table employees alter column is_staff set default true;
+
+insert into providers(provider_name, company_name) values ('test1', 'test1');
+insert into employees(username, password, is_admin) values ('reatoi', 'Beksultan-04', true);

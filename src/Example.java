@@ -4,7 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 
-public class Main {
+public class Example {
     // JDBC URL, username, and password of SQLite database
     private static final String url = "jdbc:postgresql://localhost:5432/pharmacy";
     private static final String user = "reatoi";
@@ -15,7 +15,7 @@ public class Main {
     private JButton addButton;
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Main().createAndShowGUI());
+        SwingUtilities.invokeLater(() -> new Example().createAndShowGUI());
     }
 
     private void createAndShowGUI() {
@@ -115,6 +115,7 @@ public class Main {
                 JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+        showAddProductButton();
     }
     private void showAddProductButton() {
         addButton = new JButton("Add Product");
