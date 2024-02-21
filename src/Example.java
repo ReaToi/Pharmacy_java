@@ -23,6 +23,7 @@ public class Example {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(600, 500);
 
+
         // Login panel
         JPanel loginPanel = new JPanel(new FlowLayout());
         JTextField usernameField = new JTextField(10);

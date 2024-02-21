@@ -38,8 +38,5 @@ CREATE TABLE drugs(
     photo bytea
 );
 
--- alter table employees alter column is_admin set default false;
--- alter table employees alter column is_staff set default true;
-
 insert into providers(provider_name, company_name) values ('test1', 'test1');
 insert into employees(username, password, is_admin) values ('reatoi', 'Beksultan-04', true);

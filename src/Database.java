@@ -6,6 +6,7 @@ import java.sql.Statement;
 
 public class Database {
 //    public static void
+
     public static void main(String[] args) {
         // Параметры подключения к базе данных
         String url = "jdbc:postgresql://localhost:5432/pharmacy";
