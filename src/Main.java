@@ -1,28 +1,36 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.*;
-import java.sql.*;
-
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
-    // JDBC URL, username, and password of SQLite database
-    private static final String url = "jdbc:postgresql://localhost:5432/pharmacy";
-    private static final String user = "reatoi";
-    private static final String password = "Beksultan-04";
+    private JComboBox<String> categoryTypeComboBox;
+    private JComboBox<String> categoryComboBox;
+    private JComboBox<String> providerComboBox;
 
     private JFrame frame;
     private JTable table;
     private JButton addButton;
+    private JButton addDrug;
+    private JButton addCategoryButton;
+
+    // Списки статических данных
+    private List<Category> categories = new ArrayList<>();
+    private List<Provider> providers = new ArrayList<>();
+    private List<Drug> drugs = new ArrayList<>();
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new Main().createAndShowGUI());
     }
 
     private void createAndShowGUI() {
+        // Инициализация статических данных
+        initializeStaticData();
+
         frame = new JFrame("Product Viewer");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 500);
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         // Login panel
         JPanel loginPanel = new JPanel(new FlowLayout());
@@ -34,22 +42,16 @@ public class Main {
         loginPanel.add(new JLabel("Password:"));
         loginPanel.add(passwordField);
         loginPanel.add(loginButton);
-        frame.add(loginPanel, BorderLayout.NORTH);
-
-        // Table to display products
-        table = new JTable();
-        JScrollPane scrollPane = new JScrollPane(table);
-        frame.add(scrollPane, BorderLayout.CENTER);
+        frame.add(loginPanel, BorderLayout.CENTER);
 
         frame.setVisible(true);
 
-        // Action listener for login button
         loginButton.addActionListener(e -> {
             String username = usernameField.getText();
             String password = new String(passwordField.getPassword());
 
             if (authenticate(username, password)) {
-                showProducts();
+                mainPage();
                 loginPanel.setVisible(false); // Hide login panel after successful authentication
             } else {
                 JOptionPane.showMessageDialog(frame, "Invalid username or password", "Error", JOptionPane.ERROR_MESSAGE);
@@ -57,138 +59,120 @@ public class Main {
         });
     }
 
+    private void initializeStaticData() {
+        // Пример заполнения статических данных
+        categories.add(new Category(1, "Category 1", 1));
+        categories.add(new Category(2, "Category 2", 2));
+        categories.add(new Category(3, "Category 3", 1));
+
+        providers.add(new Provider(1, "Provider 1", "Company A"));
+        providers.add(new Provider(2, "Provider 2", "Company B"));
+        providers.add(new Provider(3, "Provider 3", "Company C"));
+
+        drugs.add(new Drug(1, "Drug A", 1, "Description 1", 100, 1));
+        drugs.add(new Drug(2, "Drug B", 2, "Description 2", 200, 2));
+        drugs.add(new Drug(3, "Drug C", 3, "Description 3", 300, 3));
+    }
+
     private boolean authenticate(String username, String password) {
-        // Add your authentication logic here
-        // For simplicity, let's assume it always returns true
+        // Добавьте здесь вашу логику аутентификации
+        // Для упрощения предположим, что всегда возвращаем true
         return true;
     }
 
-    private void showProducts() {
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
+    private void mainPage() {
+        table = new JTable();
+        JScrollPane scrollPane = new JScrollPane(table);
+        frame.add(scrollPane, BorderLayout.CENTER);
 
-        try {
-            // Open a connection
-            connection = DriverManager.getConnection(url, user, password);
+        JButton logout = new JButton("Logout");
+        JButton providersButton = new JButton("Providers");
+        JButton categoriesButton = new JButton("Categories");
+        JButton addDrugButton = new JButton("Add Drug");
+        providersButton.addActionListener(e -> showProviders());
+        categoriesButton.addActionListener(e -> showCategories());
+        addDrugButton.addActionListener(e -> showAddDrugForm());
 
-            // Create a statement
-            statement = connection.createStatement();
-            String query = "SELECT * FROM providers"; // Example query, change it according to your database schema
-            resultSet = statement.executeQuery(query);
+        logout.addActionListener(e -> frame.dispose());
 
-            // Get column names
-            ResultSetMetaData metaData = resultSet.getMetaData();
-            int columnCount = metaData.getColumnCount();
-            String[] columnNames = new String[columnCount];
-            for (int i = 1; i <= columnCount; i++) {
-                columnNames[i - 1] = metaData.getColumnName(i);
-            }
+        JPanel panel = new JPanel(new FlowLayout());
+        panel.add(categoriesButton);
+        panel.add(providersButton);
+        panel.add(logout);
+        panel.add(addDrugButton);
 
-            // Populate table model with data
-            DefaultTableModel model = new DefaultTableModel(columnNames, 0);
-            while (resultSet.next()) {
-                Object[] rowData = new Object[columnCount];
-                for (int i = 1; i <= columnCount; i++) {
-                    rowData[i - 1] = resultSet.getObject(i);
-                }
-                model.addRow(rowData);
-            }
-
-            // Set table model
-            table.setModel(model);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-    private void showAddProductButton() {
-        addButton = new JButton("Add Product");
-        addButton.addActionListener(e -> showAddProductForm());
-        frame.add(addButton, BorderLayout.SOUTH);
+        frame.add(panel, BorderLayout.PAGE_START);
         frame.revalidate();
         frame.repaint();
+        frame.setVisible(true);
     }
-    private void showAddProductForm() {
-        JFrame addProductFrame = new JFrame("Add Product");
-        addProductFrame.setSize(300, 150);
-        addProductFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        addProductFrame.setLocationRelativeTo(frame);
+
+    private void showCategories() {
+        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Name", "Category Type ID"}, 0);
+        for (Category category : categories) {
+            model.addRow(new Object[]{category.getId(), category.getName(), category.getCategoryTypeId()});
+        }
+        table.setModel(model);
+    }
+
+    private void showProviders() {
+        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Name", "Company Name"}, 0);
+        for (Provider provider : providers) {
+            model.addRow(new Object[]{provider.getId(), provider.getName(), provider.getCompanyName()});
+        }
+        table.setModel(model);
+    }
+
+    private void showAddDrugForm() {
+        JFrame addDrugFrame = new JFrame("Add Drug");
+        addDrugFrame.setSize(300, 150);
+        addDrugFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        addDrugFrame.setLocationRelativeTo(frame);
 
         JPanel inputPanel = new JPanel(new GridLayout(2, 2, 5, 5));
         JTextField nameField = new JTextField();
-        JTextField priceField = new JTextField();
-        inputPanel.add(new JLabel("Name:"));
+        JTextField descriptionField = new JTextField();
+        JTextField countField = new JTextField();
+        categoryComboBox = new JComboBox<>();
+        providerComboBox = new JComboBox<>();
+
+        for (Category category : categories) {
+            categoryComboBox.addItem(category.getName());
+        }
+
+        for (Provider provider : providers) {
+            providerComboBox.addItem(provider.getName());
+        }
+
+        inputPanel.add(new JLabel("Name category:"));
         inputPanel.add(nameField);
-        inputPanel.add(new JLabel("Price:"));
-        inputPanel.add(priceField);
-        addProductFrame.add(inputPanel, BorderLayout.CENTER);
+        inputPanel.add(new JLabel("Count:"));
+        inputPanel.add(countField);
+        inputPanel.add(new JLabel("Category:"));
+        inputPanel.add(categoryComboBox);
+        inputPanel.add(new JLabel("Provider"));
+        inputPanel.add(providerComboBox);
+        addDrugFrame.add(inputPanel, BorderLayout.CENTER);
 
         JButton saveButton = new JButton("Save");
         saveButton.addActionListener(e -> {
             String name = nameField.getText();
-            double price = Double.parseDouble(priceField.getText());
+            String description = descriptionField.getText();
+            int count = Integer.parseInt(countField.getText());
+            int categoryId = categories.get(categoryComboBox.getSelectedIndex()).getId();
+            int providerId = providers.get(providerComboBox.getSelectedIndex()).getId();
 
-            if (addProduct(name, price)) {
-                JOptionPane.showMessageDialog(addProductFrame, "Product added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                addProductFrame.dispose();
-                showProducts();
+            if (addDrug(name, categoryId, description, count, providerId)) {
+                addDrugFrame.dispose();
             } else {
-                JOptionPane.showMessageDialog(addProductFrame, "Error adding product", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(addDrugFrame, "Error adding drug", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
-        addProductFrame.add(saveButton, BorderLayout.SOUTH);
-
-        addProductFrame.setVisible(true);
+        addDrugFrame.add(saveButton, BorderLayout.SOUTH);
+        addDrugFrame.setVisible(true);
     }
 
-    private boolean addProduct(String name, double price) {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-
-        try {
-            // Open a connection
-            connection = DriverManager.getConnection(url, user, password);
-
-            // Create a prepared statement
-            String query = "INSERT INTO providers (provider_name, company_name) VALUES (?, ?)";
-            preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, name);
-            preparedStatement.setDouble(2, price);
-
-            // Execute the statement
-            preparedStatement.executeUpdate();
-
-            return true;
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            return false;
-        } finally {
-            try {
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }}
-}
+    private boolean addDrug(String name, int categoryId, String description, int count, int providerId) {
+        // Ваш код добавления лекарства
+        return true; // Временный возврат успеха
+    }}
