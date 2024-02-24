@@ -453,6 +453,46 @@ public class Example {
         add_add_drugs_form.setVisible(true);
     }
 
+    private boolean add_employee(String email, String address, String fullname, String username, String password,
+                                 boolean is_admin){
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        try{
+            if(is_admin == null) is_admin = false;
+            connection = DriverManager.getConnection(url, user, password);
+            String query = "INSERT INTO employees (email, fullname, username, password, address, is_admin) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)";
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, email);
+            preparedStatement.setString(2, fullname);
+            preparedStatement.setString(3, username);
+            preparedStatement.setString(4, password);
+            preparedStatement.setString(5, address);
+            preparedStatement.setBoolean(6, is_admin);
+
+            // Execute the statement
+            preparedStatement.executeUpdate();
+
+            return true;
+        }
+        catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }finally {
+            try {
+                if (preparedStatement != null) {
+                    preparedStatement.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     private boolean add_category(String name, int category_type){
         Connection connection = null;
         PreparedStatement preparedStatement = null;
