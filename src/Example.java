@@ -8,7 +8,7 @@ import java.util.List;
 
 public class Example {
     // JDBC URL, username, and password of SQLite database
-    private static final String url = "jdbc:postgresql://localhost:5432/pharmacy";
+    private static final String url = "jdbc:postgresql://172.21.0.2:5432/pharmacy";
     private static final String user = "reatoi";
     private static final String password = "Beksultan-04";
 
@@ -22,6 +22,8 @@ public class Example {
     private JButton addButton;
     private JButton addDrug;
     private JButton addCategoryButton;
+    private JButton add_employee_button;
+    private JButton update_drug;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new Example().createAndShowGUI());
@@ -81,10 +83,12 @@ public class Example {
         JButton provisers = new JButton("Providers");
         JButton categories = new JButton("Categories");
         JButton drugs = new JButton("Drugs");
-        JButton add_drug = new JButton("Add drug");
+        JButton employee = new JButton("Employees");
         provisers.addActionListener(e -> showProducts());
         categories.addActionListener(e -> show_categories());
-        add_drug.addActionListener(e -> show_add_drug_button());
+        drugs.addActionListener(e -> show_drugs());
+        employee.addActionListener(e -> show_employees());
+
 
         logout.addActionListener(e -> {
 //            createAndShowGUI();
@@ -94,10 +98,9 @@ public class Example {
         JPanel panel = new JPanel(new FlowLayout());
         panel.add(categories);
         panel.add(provisers);
+        panel.add(employee);
+        panel.add(drugs);
         panel.add(logout);
-
-        panel.add(add_drug);
-//        frame.add(logout, BorderLayout.NORTH);
         frame.add(panel, BorderLayout.PAGE_START);
         frame.revalidate();
         frame.repaint();
@@ -118,7 +121,7 @@ public class Example {
         try{
             connection = DriverManager.getConnection(url, user, password);
             statement = connection.createStatement();
-            String query = "SELECT category.id, category.category_name, category_types.category_type, category_type_id FROM category inner join category_types ON category.category_type_id=category_types.id"; // Example query, change it according to your database schema
+            String query = "SELECT category.category_name, category_types.category_type, category_type_id FROM category inner join category_types ON category.category_type_id=category_types.id"; // Example query, change it according to your database schema
             resultSet = statement.executeQuery(query);
             ResultSetMetaData metaData = resultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
@@ -160,7 +163,114 @@ public class Example {
         }
         frame.remove(addButton);
         if(addDrug != null) frame.remove(addDrug);
+        if (add_employee_button != null) frame.remove(add_employee_button);
         CategoryButton();
+    }
+
+    private void show_drugs(){
+//        "select drugs.photo, drugs.drug_name, drugs.description, drugs.count, category.category_name, providers.provider_name from drugs inner join category on drugs.category_id = category.id inner join providers on drugs.provider_id = providers.id";
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try{
+            connection = DriverManager.getConnection(url, user, password);
+            statement = connection.createStatement();
+            String query = "select drugs.photo, drugs.drug_name, drugs.description, drugs.count, category.category_name, providers.provider_name from drugs inner join category on drugs.category_id = category.id inner join providers on drugs.provider_id = providers.id"; // Example query, change it according to your database schema
+            resultSet = statement.executeQuery(query);
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            String[] columnNames = new String[columnCount];
+            for (int i = 1; i <= columnCount; i++) {
+                columnNames[i - 1] = metaData.getColumnName(i);
+            }
+
+            // Populate table model with data
+            DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+            while (resultSet.next()) {
+                Object[] rowData = new Object[columnCount];
+                for (int i = 1; i <= columnCount; i++) {
+                    rowData[i - 1] = resultSet.getObject(i);
+                }
+                model.addRow(rowData);
+            }
+
+            // Set table model
+            table.setModel(model);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                if (statement != null) {
+                    statement.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        if(addButton != null) frame.remove(addButton);
+        if(addCategoryButton != null) frame.remove(addCategoryButton);
+        if (add_employee_button != null) frame.remove(add_employee_button);
+        show_add_drug_button();
+    }
+    private void show_employees(){
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try{
+            connection = DriverManager.getConnection(url, user, password);
+            statement = connection.createStatement();
+            String query = "SELECT fullname, username, email, address FROM employees"; // Example query, change it according to your database schema
+            resultSet = statement.executeQuery(query);
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            String[] columnNames = new String[columnCount];
+            for (int i = 1; i <= columnCount; i++) {
+                columnNames[i - 1] = metaData.getColumnName(i);
+            }
+
+            // Populate table model with data
+            DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+            while (resultSet.next()) {
+                Object[] rowData = new Object[columnCount];
+                for (int i = 1; i <= columnCount; i++) {
+                    rowData[i - 1] = resultSet.getObject(i);
+                }
+                model.addRow(rowData);
+            }
+
+            // Set table model
+            table.setModel(model);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                if (statement != null) {
+                    statement.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        if(addButton != null) frame.remove(addButton);
+        if(addDrug != null) frame.remove(addDrug);
+        if(addCategoryButton != null) frame.remove(addCategoryButton);
+        add_employee_button();
     }
 
     private void showProducts() {
@@ -181,7 +291,7 @@ public class Example {
 
             // Create a statement
             statement = connection.createStatement();
-            String query = "SELECT * FROM providers"; // Example query, change it according to your database schema
+            String query = "SELECT id, provider_name, company_name FROM providers"; // Example query, change it according to your database schema
             resultSet = statement.executeQuery(query);
 
             // Get column names
@@ -191,17 +301,20 @@ public class Example {
             for (int i = 1; i <= columnCount; i++) {
                 columnNames[i - 1] = metaData.getColumnName(i);
             }
+//            columnNames[columnCount] = "s";
+//            columnCount++;
 
             // Populate table model with data
             DefaultTableModel model = new DefaultTableModel(columnNames, 0);
             while (resultSet.next()) {
+//                model.addColumn("");
                 Object[] rowData = new Object[columnCount];
                 for (int i = 1; i <= columnCount; i++) {
+                    System.out.println(resultSet.getObject(i));
                     rowData[i - 1] = resultSet.getObject(i);
                 }
                 model.addRow(rowData);
             }
-
             // Set table model
             table.setModel(model);
         } catch (SQLException ex) {
@@ -224,7 +337,8 @@ public class Example {
             }
         }
         if(addDrug != null) frame.remove(addDrug);
-        frame.remove(addCategoryButton);
+        if (addCategoryButton != null) frame.remove(addCategoryButton);
+        if (add_employee_button != null) frame.remove(add_employee_button);
         showAddProductButton();
 
     }
@@ -241,8 +355,9 @@ public class Example {
         frame.add(addDrug, BorderLayout.SOUTH);
         frame.revalidate();
         frame.repaint();
-        frame.remove(addButton);
-        frame.remove(addCategoryButton);
+//        if (addButton  !=null) frame.remove(addButton);
+//        if (addCategoryButton  !=null) frame.remove(addCategoryButton);
+//        if (add_employee_button != null) frame.remove(add_employee_button);
     }
     private void CategoryButton() {
         addCategoryButton = new JButton("Add Category");
@@ -250,6 +365,17 @@ public class Example {
         frame.add(addCategoryButton, BorderLayout.SOUTH);
         frame.revalidate();
         frame.repaint();
+    }
+    private void add_employee_button(){
+        add_employee_button = new JButton("Add Employee");
+        add_employee_button.addActionListener(e -> show_add_employees_form());
+        frame.add(add_employee_button, BorderLayout.SOUTH);
+        frame.revalidate();
+        frame.repaint();
+//        frame.remove(addButton);
+//        frame.remove(addCategoryButton);
+//        if(addDrug != null) frame.remove(addDrug);
+
     }
     private void load_provider(){
         try(Connection connection = DriverManager.getConnection(url, user, password);
@@ -409,9 +535,53 @@ public class Example {
         addProductFrame.setVisible(true);
     }
 
+    private void show_add_employees_form(){
+        JFrame add_employees_form = new JFrame("Add Employee");
+        add_employees_form.setSize(600, 200);
+        add_employees_form.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        add_employees_form.setLocationRelativeTo(frame);
+        JPanel input_panel = new JPanel(new GridLayout(2, 2, 5, 5));
+        JTextField fullname_field = new JTextField();
+        JTextField email_field = new JTextField();
+        JTextField username_field = new JTextField();
+        JTextField password_field = new JTextField();
+        JTextField address_field = new JTextField();
+        input_panel.add(new JLabel("Fullname"));
+        input_panel.add(fullname_field);
+
+        input_panel.add(new JLabel("Email"));
+        input_panel.add(email_field);
+        input_panel.add(new JLabel("Username"));
+        input_panel.add(username_field);
+        input_panel.add(new JLabel("Password"));
+        input_panel.add(password_field);
+        input_panel.add(new JLabel("Address"));
+        input_panel.add(address_field);
+        add_employees_form.add(input_panel, BorderLayout.CENTER);
+        JButton saveButton = new JButton("Save");
+        saveButton.addActionListener(e -> {
+            String fullname = fullname_field.getText();
+            String email = email_field.getText();
+            String username = username_field.getText();
+            String pswd = password_field.getText();
+            String address = address_field.getText();
+
+            if (add_employee(email, address, fullname, username, pswd, null)) {
+//                JOptionPane.showMessageDialog(addProductFrame, "Product added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                add_employees_form.dispose();
+                main_page();
+            } else {
+                JOptionPane.showMessageDialog(add_employees_form, "Error adding employee", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        add_employees_form.add(saveButton, BorderLayout.SOUTH);
+        add_employees_form.setVisible(true);
+
+    }
+
     private void show_add_drugs_form(){
         JFrame add_add_drugs_form = new JFrame("Add Drugs");
-        add_add_drugs_form.setSize(300, 150);
+        add_add_drugs_form.setSize(400, 200);
         add_add_drugs_form.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         add_add_drugs_form.setLocationRelativeTo(frame);
         JPanel inputPanel = new JPanel(new GridLayout(2, 2, 5, 5));
@@ -432,6 +602,8 @@ public class Example {
         inputPanel.add(providerComboBox);
         add_add_drugs_form.add(inputPanel, BorderLayout.CENTER);
         JButton saveButton = new JButton("Save");
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> add_add_drugs_form.dispose());
         saveButton.addActionListener(e -> {
             String name = nameField.getText();
             String description = descriptionField.getText();
@@ -449,16 +621,19 @@ public class Example {
                 JOptionPane.showMessageDialog(add_add_drugs_form, "Error adding product", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
-        add_add_drugs_form.add(saveButton, BorderLayout.SOUTH);
+        JPanel panel = new JPanel(new FlowLayout());
+        panel.add(saveButton);
+        panel.add(cancelButton);
+        add_add_drugs_form.add(panel, BorderLayout.SOUTH);
         add_add_drugs_form.setVisible(true);
     }
 
-    private boolean add_employee(String email, String address, String fullname, String username, String password,
-                                 boolean is_admin){
+    private boolean add_employee(String email, String address, String fullname, String username, String pswd,
+                                 Boolean is_admin){
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         try{
-            if(is_admin == null) is_admin = false;
+            if(!Boolean.TRUE.equals(is_admin)) is_admin = false;
             connection = DriverManager.getConnection(url, user, password);
             String query = "INSERT INTO employees (email, fullname, username, password, address, is_admin) " +
                     "VALUES (?, ?, ?, ?, ?, ?)";
@@ -466,7 +641,7 @@ public class Example {
             preparedStatement.setString(1, email);
             preparedStatement.setString(2, fullname);
             preparedStatement.setString(3, username);
-            preparedStatement.setString(4, password);
+            preparedStatement.setString(4, pswd);
             preparedStatement.setString(5, address);
             preparedStatement.setBoolean(6, is_admin);
 
