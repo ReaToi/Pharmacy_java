@@ -1,10 +1,14 @@
-import java.sql.Connection;
+//import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.*;
 
 public class Database {
+    private static final String url = "jdbc:postgresql://localhost:5432/pharmacy";
+    private static final String user = "reatoi";
+    private static final String password = "Beksultan-04";
 //    public static void
 
     public static void main(String[] args) {
@@ -58,6 +62,17 @@ public class Database {
             }
         }
     }
+
+    public static Statement db_connect(String url, String  user, String pwd) throws SQLException {
+        Connection connection = DriverManager.getConnection(url, user, password);
+        return connection.createStatement();
+    }
+    public static ResultSet select_category(Statement connect) throws SQLException {
+        String query = "SELECT category.category_name, category_types.category_type, category_type_id FROM category inner join category_types ON category.category_type_id=category_types.id"; // Example query, change it according to your database schema
+//        ResultSet resultSet = connect.executeQuery(query);
+        return connect.executeQuery(query);
+    }
+
 
 }
 

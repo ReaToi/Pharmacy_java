@@ -8,10 +8,10 @@ import java.util.List;
 
 public class Example {
     // JDBC URL, username, and password of SQLite database
-    private static final String url = "jdbc:postgresql://172.21.0.2:5432/pharmacy";
+    private static final String url = "jdbc:postgresql://localhost:5432/pharmacy";
     private static final String user = "reatoi";
     private static final String password = "Beksultan-04";
-
+    Statement statement = Database.db_connect(url, user, password);
     private JComboBox<String> categoryTypeComboBox;
     private JComboBox<String> categoryComboBox;
     private JComboBox<String> providerComboBox;
@@ -25,8 +25,17 @@ public class Example {
     private JButton add_employee_button;
     private JButton update_drug;
 
+    public Example() throws SQLException {
+    }
+
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Example().createAndShowGUI());
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new Example().createAndShowGUI();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private void createAndShowGUI() {
@@ -85,7 +94,13 @@ public class Example {
         JButton drugs = new JButton("Drugs");
         JButton employee = new JButton("Employees");
         provisers.addActionListener(e -> showProducts());
-        categories.addActionListener(e -> show_categories());
+        categories.addActionListener(e -> {
+            try {
+                show_categories();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
         drugs.addActionListener(e -> show_drugs());
         employee.addActionListener(e -> show_employees());
 
@@ -107,7 +122,7 @@ public class Example {
         frame.setVisible(true);
     }
 
-    private void show_categories(){
+    private void show_categories() throws SQLException {
 //        frame.remove(scrollPane); // Удаляем текущую панель с таблицей
 //        table = new JTable(); // Создаем новую таблицу или обновляем существующую
 //        JScrollPane newScrollPane = new JScrollPane(table); // Создаем новую панель прокрутки с таблицей
@@ -115,15 +130,18 @@ public class Example {
 //        frame.revalidate(); // Пересчитываем компоновку
 //        frame.repaint();
 
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try{
-            connection = DriverManager.getConnection(url, user, password);
-            statement = connection.createStatement();
-            String query = "SELECT category.category_name, category_types.category_type, category_type_id FROM category inner join category_types ON category.category_type_id=category_types.id"; // Example query, change it according to your database schema
-            resultSet = statement.executeQuery(query);
-            ResultSetMetaData metaData = resultSet.getMetaData();
+//        Connection connection = null;
+//        Statement statement = null;
+//        ResultSet resultSet = null;
+
+//            connection = DriverManager.getConnection(url, user, password);
+//            statement = connection.createStatement();
+//            String query = "SELECT category.category_name, category_types.category_type, category_type_id FROM category inner join category_types ON category.category_type_id=category_types.id"; // Example query, change it according to your database schema
+//            resultSet = statement.executeQuery(query);
+//            ResultSetMetaData metaData = resultSet.getMetaData();
+        ResultSet resultSet = Database.select_category(statement);
+        ResultSetMetaData metaData = resultSet.getMetaData();
+
             int columnCount = metaData.getColumnCount();
             String[] columnNames = new String[columnCount];
             for (int i = 1; i <= columnCount; i++) {
@@ -142,25 +160,7 @@ public class Example {
 
             // Set table model
             table.setModel(model);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
+
         frame.remove(addButton);
         if(addDrug != null) frame.remove(addDrug);
         if (add_employee_button != null) frame.remove(add_employee_button);
@@ -493,7 +493,11 @@ public class Example {
             if (add_category(name, category)) {
 //                JOptionPane.showMessageDialog(addProductFrame, "Product added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 add_category_frame.dispose();
-                show_categories();
+                try {
+                    show_categories();
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
             } else {
                 JOptionPane.showMessageDialog(add_category_frame, "Error adding product", "Error", JOptionPane.ERROR_MESSAGE);
             }
