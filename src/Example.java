@@ -11,7 +11,7 @@ public class Example {
     private static final String url = "jdbc:postgresql://localhost:5432/pharmacy";
     private static final String user = "reatoi";
     private static final String password = "Beksultan-04";
-    Statement statement = Database.db_connect(url, user, password);
+    Connection connect = Database.db_connect(url, user, password);
     private JComboBox<String> categoryTypeComboBox;
     private JComboBox<String> categoryComboBox;
     private JComboBox<String> providerComboBox;
@@ -68,18 +68,31 @@ public class Example {
             String username = usernameField.getText();
             String password = new String(passwordField.getPassword());
 
-            if (authenticate(username, password)) {
-                main_page();
-                loginPanel.setVisible(false); // Hide login panel after successful authentication
-            } else {
-                JOptionPane.showMessageDialog(frame, "Invalid username or password", "Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                if (authenticate(username, password)) {
+                    main_page();
+                    loginPanel.setVisible(false); // Hide login panel after successful authentication
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Invalid username or password", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
             }
         });
     }
 
-    private boolean authenticate(String username, String password) {
+    private boolean authenticate(String username, String pswd) throws SQLException {
         // Add your authentication logic here
         // For simplicity, let's assume it always returns true
+        ResultSet user = Database.get_auth_employee(connect, username, pswd);
+        System.out.println(user.next());
+        while (user.next()) {
+            // Чтение данных из результата
+            int id = user.getInt("id");
+            String userna = user.getString("username");
+            // Вывод данных (здесь можно провести другую обработку)
+            System.out.println("ID: " + id + ", Name: " + userna);
+        }
         return true;
     }
     private void main_page(){
@@ -139,7 +152,7 @@ public class Example {
 //            String query = "SELECT category.category_name, category_types.category_type, category_type_id FROM category inner join category_types ON category.category_type_id=category_types.id"; // Example query, change it according to your database schema
 //            resultSet = statement.executeQuery(query);
 //            ResultSetMetaData metaData = resultSet.getMetaData();
-        ResultSet resultSet = Database.select_category(statement);
+        ResultSet resultSet = Database.select_category(connect);
         ResultSetMetaData metaData = resultSet.getMetaData();
 
             int columnCount = metaData.getColumnCount();
@@ -175,7 +188,7 @@ public class Example {
         try{
             connection = DriverManager.getConnection(url, user, password);
             statement = connection.createStatement();
-            String query = "select drugs.photo, drugs.drug_name, drugs.description, drugs.count, category.category_name, providers.provider_name from drugs inner join category on drugs.category_id = category.id inner join providers on drugs.provider_id = providers.id"; // Example query, change it according to your database schema
+            String query = "select drugs.id, drugs.photo, drugs.drug_name, drugs.description, drugs.count, category.category_name, providers.provider_name from drugs inner join category on drugs.category_id = category.id inner join providers on drugs.provider_id = providers.id"; // Example query, change it according to your database schema
             resultSet = statement.executeQuery(query);
             ResultSetMetaData metaData = resultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
@@ -227,7 +240,7 @@ public class Example {
         try{
             connection = DriverManager.getConnection(url, user, password);
             statement = connection.createStatement();
-            String query = "SELECT fullname, username, email, address FROM employees"; // Example query, change it according to your database schema
+            String query = "SELECT id, fullname, username, email, address FROM employees"; // Example query, change it according to your database schema
             resultSet = statement.executeQuery(query);
             ResultSetMetaData metaData = resultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
@@ -310,7 +323,7 @@ public class Example {
 //                model.addColumn("");
                 Object[] rowData = new Object[columnCount];
                 for (int i = 1; i <= columnCount; i++) {
-                    System.out.println(resultSet.getObject(i));
+//                    System.out.println(resultSet.getObject(i));
                     rowData[i - 1] = resultSet.getObject(i);
                 }
                 model.addRow(rowData);
