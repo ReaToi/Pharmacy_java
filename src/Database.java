@@ -72,6 +72,10 @@ public class Database {
 //        ResultSet resultSet = connect.executeQuery(query);
         return connect.executeQuery(query);
     }
+    public static ResultSet select_providers(Statement connect) throws SQLException{
+        String query = "SELECT id, provider_name, company_name FROM providers";
+        return connect.executeQuery(query);
+    }
 
 
 }
