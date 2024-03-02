@@ -25,7 +25,6 @@ public class Example {
     private JButton addDrug;
     private JButton addCategoryButton;
     private JButton add_employee_button;
-    private JButton update_drug;
 
     public Example() throws SQLException {
     }
@@ -43,7 +42,7 @@ public class Example {
     private void createAndShowGUI() {
         addCategoryButton = new JButton("Add Category");
         addButton = new JButton("Add Provider");
-        frame = new JFrame("Product Viewer");
+        frame = new JFrame("Pharmacy Viewer");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         // Login panel
@@ -93,8 +92,8 @@ public class Example {
             auth_user = userna;
             auth_user_id = id;
         }
-//        return !(auth_user==null);
-        return true;
+        return !(auth_user==null);
+//        return true;
     }
     private void main_page(){
         table = new JTable();
@@ -135,14 +134,9 @@ public class Example {
                 throw new RuntimeException(ex);
             }
         });
-
-
         logout.addActionListener(e ->{
-//            createAndShowGUI();
-            frame.dispose();
-//            logout_win()
+            logout_win();
         });
-
         JPanel panel = new JPanel(new FlowLayout());
         panel.add(categories);
         panel.add(provisers);
@@ -156,21 +150,28 @@ public class Example {
     }
     private void logout_win() {
         JFrame logout_frame = new JFrame("Are you come out");
-        logout_frame.setSize(300, 200);
+        logout_frame.setSize(300, 100);
         logout_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         logout_frame.setLocationRelativeTo(frame);
-        JButton logout = new JButton("Ok");
+        JPanel main_panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new FlowLayout());
+        JLabel label = new JLabel("                      " +
+                "Are you sure you want to log out?");
+        main_panel.add(label, BorderLayout.CENTER);
+        JButton logout = new JButton("Yes");
         JButton cancel = new JButton("Cancel");
-        JPanel panel = new JPanel();
         panel.add(logout);
         panel.add(cancel);
         logout.addActionListener(e -> {
             logout_frame.dispose();
             frame.dispose();
         });
+        main_panel.add(panel, BorderLayout.SOUTH);
         cancel.addActionListener(e -> logout_frame.dispose());
+        logout_frame.setVisible(true);
+        logout_frame.add(main_panel);
+//        logout_frame.add(logout, BorderLayout.SOUTH);
     }
-
     private void show_categories() throws SQLException {
         removeButtons();
         ResultSet resultSet = Database.select_category(connect);
@@ -200,7 +201,6 @@ public class Example {
 //        if (add_employee_button != null) frame.remove(add_employee_button);
         CategoryButton();
     }
-
     private void show_drugs() throws SQLException{
         removeButtons();
 //        "select drugs.photo, drugs.drug_name, drugs.description, drugs.count, category.category_name, providers.provider_name from drugs inner join category on drugs.category_id = category.id inner join providers on drugs.provider_id = providers.id";
@@ -253,7 +253,6 @@ public class Example {
 //        if(addCategoryButton != null) frame.remove(addCategoryButton);
         add_employee_button();
     }
-
     private void showProducts() throws SQLException{
         removeButtons();
 
@@ -299,9 +298,6 @@ public class Example {
         frame.add(addDrug, BorderLayout.SOUTH);
         frame.revalidate();
         frame.repaint();
-//        if (addButton  !=null) frame.remove(addButton);
-//        if (addCategoryButton  !=null) frame.remove(addCategoryButton);
-//        if (add_employee_button != null) frame.remove(add_employee_button);
     }
     private void CategoryButton() {
         addCategoryButton = new JButton("Add Category");
@@ -356,7 +352,6 @@ public class Example {
             categoryTypeComboBox.addItem(categoryType);
         }
     }
-
     private int get_category_id(String category){
         try(Connection connection = DriverManager.getConnection(url, user, password);
             PreparedStatement statement = connection.prepareStatement("SELECT id FROM category WHERE category_name = ?")) {
@@ -369,7 +364,6 @@ public class Example {
         }
         return -1;
     }
-
     private int get_provider_id(String provider){
         try(Connection connection = DriverManager.getConnection(url, user, password);
             PreparedStatement statement = connection.prepareStatement("SELECT id FROM providers WHERE provider_name = ?")) {
@@ -413,10 +407,8 @@ public class Example {
         JButton saveButton = new JButton("Save");
         saveButton.addActionListener(e -> {
             String name = nameField.getText();
-//            int category = Integer.valueOf(category_type_field.getText());
             String selectedCategoryType = (String) categoryTypeComboBox.getSelectedItem();
             int category = getCategoryTypeId(selectedCategoryType);
-
             if (add_category(name, category)) {
 //                JOptionPane.showMessageDialog(addProductFrame, "Product added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 add_category_frame.dispose();
@@ -499,7 +491,6 @@ public class Example {
             String username = username_field.getText();
             String pswd = password_field.getText();
             String address = address_field.getText();
-
             if (add_employee(email, address, fullname, username, pswd, null)) {
 //                JOptionPane.showMessageDialog(addProductFrame, "Product added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 add_employees_form.dispose();
