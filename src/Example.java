@@ -12,6 +12,8 @@ public class Example {
     private static final String user = "reatoi";
     private static final String password = "Beksultan-04";
     Connection connect = Database.db_connect(url, user, password);
+    private static String auth_user;
+    private static int auth_user_id;
     private JComboBox<String> categoryTypeComboBox;
     private JComboBox<String> categoryComboBox;
     private JComboBox<String> providerComboBox;
@@ -55,12 +57,6 @@ public class Example {
         loginPanel.add(passwordField);
         loginPanel.add(loginButton);
         frame.add(loginPanel, BorderLayout.CENTER);
-
-        // Table to display products
-//        table = new JTable();
-//        JScrollPane scrollPane = new JScrollPane(table);
-//        frame.add(scrollPane, BorderLayout.CENTER);
-//
         frame.setVisible(true);
 
         // Action listener for login button
@@ -80,19 +76,24 @@ public class Example {
             }
         });
     }
+    private void removeButtons() {
+        if (addButton != null) frame.remove(addButton);
+        if (addDrug != null) frame.remove(addDrug);
+        if (addCategoryButton != null) frame.remove(addCategoryButton);
+        if (add_employee_button != null) frame.remove(add_employee_button);
+    }
 
     private boolean authenticate(String username, String pswd) throws SQLException {
         // Add your authentication logic here
         // For simplicity, let's assume it always returns true
         ResultSet user = Database.get_auth_employee(connect, username, pswd);
-        System.out.println(user.next());
         while (user.next()) {
-            // Чтение данных из результата
             int id = user.getInt("id");
             String userna = user.getString("username");
-            // Вывод данных (здесь можно провести другую обработку)
-            System.out.println("ID: " + id + ", Name: " + userna);
+            auth_user = userna;
+            auth_user_id = id;
         }
+//        return !(auth_user==null);
         return true;
     }
     private void main_page(){
@@ -106,7 +107,13 @@ public class Example {
         JButton categories = new JButton("Categories");
         JButton drugs = new JButton("Drugs");
         JButton employee = new JButton("Employees");
-        provisers.addActionListener(e -> showProducts());
+        provisers.addActionListener(e -> {
+            try {
+                showProducts();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
         categories.addActionListener(e -> {
             try {
                 show_categories();
@@ -114,13 +121,26 @@ public class Example {
                 throw new RuntimeException(ex);
             }
         });
-        drugs.addActionListener(e -> show_drugs());
-        employee.addActionListener(e -> show_employees());
+        drugs.addActionListener(e -> {
+            try {
+                show_drugs();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+        employee.addActionListener(e -> {
+            try {
+                show_employees();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
 
 
-        logout.addActionListener(e -> {
+        logout.addActionListener(e ->{
 //            createAndShowGUI();
             frame.dispose();
+//            logout_win()
         });
 
         JPanel panel = new JPanel(new FlowLayout());
@@ -134,226 +154,131 @@ public class Example {
         frame.repaint();
         frame.setVisible(true);
     }
+    private void logout_win() {
+        JFrame logout_frame = new JFrame("Are you come out");
+        logout_frame.setSize(300, 200);
+        logout_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        logout_frame.setLocationRelativeTo(frame);
+        JButton logout = new JButton("Ok");
+        JButton cancel = new JButton("Cancel");
+        JPanel panel = new JPanel();
+        panel.add(logout);
+        panel.add(cancel);
+        logout.addActionListener(e -> {
+            logout_frame.dispose();
+            frame.dispose();
+        });
+        cancel.addActionListener(e -> logout_frame.dispose());
+    }
 
     private void show_categories() throws SQLException {
-//        frame.remove(scrollPane); // Удаляем текущую панель с таблицей
-//        table = new JTable(); // Создаем новую таблицу или обновляем существующую
-//        JScrollPane newScrollPane = new JScrollPane(table); // Создаем новую панель прокрутки с таблицей
-//        frame.add(newScrollPane, BorderLayout.CENTER); // Добавляем новую панель прокрутки в центр
-//        frame.revalidate(); // Пересчитываем компоновку
-//        frame.repaint();
-
-//        Connection connection = null;
-//        Statement statement = null;
-//        ResultSet resultSet = null;
-
-//            connection = DriverManager.getConnection(url, user, password);
-//            statement = connection.createStatement();
-//            String query = "SELECT category.category_name, category_types.category_type, category_type_id FROM category inner join category_types ON category.category_type_id=category_types.id"; // Example query, change it according to your database schema
-//            resultSet = statement.executeQuery(query);
-//            ResultSetMetaData metaData = resultSet.getMetaData();
+        removeButtons();
         ResultSet resultSet = Database.select_category(connect);
         ResultSetMetaData metaData = resultSet.getMetaData();
 
-            int columnCount = metaData.getColumnCount();
-            String[] columnNames = new String[columnCount];
+        int columnCount = metaData.getColumnCount() - 1;
+        String[] columnNames = new String[columnCount];
+        for (int i = 1; i <= columnCount; i++) {
+            columnNames[i - 1] = metaData.getColumnName(i);
+        }
+
+        // Populate table model with data
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        while (resultSet.next()) {
+            Object[] rowData = new Object[columnCount];
             for (int i = 1; i <= columnCount; i++) {
-                columnNames[i - 1] = metaData.getColumnName(i);
+                rowData[i - 1] = resultSet.getObject(i);
             }
+            model.addRow(rowData);
+        }
 
-            // Populate table model with data
-            DefaultTableModel model = new DefaultTableModel(columnNames, 0);
-            while (resultSet.next()) {
-                Object[] rowData = new Object[columnCount];
-                for (int i = 1; i <= columnCount; i++) {
-                    rowData[i - 1] = resultSet.getObject(i);
-                }
-                model.addRow(rowData);
-            }
+        // Set table model
+        table.setModel(model);
 
-            // Set table model
-            table.setModel(model);
-
-        frame.remove(addButton);
-        if(addDrug != null) frame.remove(addDrug);
-        if (add_employee_button != null) frame.remove(add_employee_button);
+//        if(addButton != null) frame.remove(addButton);
+//        if(addDrug != null) frame.remove(addDrug);
+//        if (add_employee_button != null) frame.remove(add_employee_button);
         CategoryButton();
     }
 
-    private void show_drugs(){
+    private void show_drugs() throws SQLException{
+        removeButtons();
 //        "select drugs.photo, drugs.drug_name, drugs.description, drugs.count, category.category_name, providers.provider_name from drugs inner join category on drugs.category_id = category.id inner join providers on drugs.provider_id = providers.id";
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try{
-            connection = DriverManager.getConnection(url, user, password);
-            statement = connection.createStatement();
-            String query = "select drugs.id, drugs.photo, drugs.drug_name, drugs.description, drugs.count, category.category_name, providers.provider_name from drugs inner join category on drugs.category_id = category.id inner join providers on drugs.provider_id = providers.id"; // Example query, change it according to your database schema
-            resultSet = statement.executeQuery(query);
-            ResultSetMetaData metaData = resultSet.getMetaData();
-            int columnCount = metaData.getColumnCount();
-            String[] columnNames = new String[columnCount];
-            for (int i = 1; i <= columnCount; i++) {
-                columnNames[i - 1] = metaData.getColumnName(i);
+        ResultSet resultSet = Database.select_drugs(connect);
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        int columnCount = metaData.getColumnCount();
+        String[] columnNames = new String[columnCount];
+        for (int i = 1; i <= columnCount; i++) {
+            columnNames[i - 1] = metaData.getColumnName(i);
+        // Populate table model with data
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        while (resultSet.next()) {
+            Object[] rowData = new Object[columnCount];
+            for (i = 1; i <= columnCount; i++) {
+                rowData[i - 1] = resultSet.getObject(i);
             }
-
-            // Populate table model with data
-            DefaultTableModel model = new DefaultTableModel(columnNames, 0);
-            while (resultSet.next()) {
-                Object[] rowData = new Object[columnCount];
-                for (int i = 1; i <= columnCount; i++) {
-                    rowData[i - 1] = resultSet.getObject(i);
-                }
-                model.addRow(rowData);
-            }
-
-            // Set table model
-            table.setModel(model);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
+            model.addRow(rowData);
         }
-        if(addButton != null) frame.remove(addButton);
-        if(addCategoryButton != null) frame.remove(addCategoryButton);
-        if (add_employee_button != null) frame.remove(add_employee_button);
+        // Set table model
+        table.setModel(model);
+        }
+//        if(addButton != null) frame.remove(addButton);
+//        if(addCategoryButton != null) frame.remove(addCategoryButton);
+//        if (add_employee_button != null) frame.remove(add_employee_button);
         show_add_drug_button();
     }
-    private void show_employees(){
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try{
-            connection = DriverManager.getConnection(url, user, password);
-            statement = connection.createStatement();
-            String query = "SELECT id, fullname, username, email, address FROM employees"; // Example query, change it according to your database schema
-            resultSet = statement.executeQuery(query);
-            ResultSetMetaData metaData = resultSet.getMetaData();
-            int columnCount = metaData.getColumnCount();
-            String[] columnNames = new String[columnCount];
-            for (int i = 1; i <= columnCount; i++) {
-                columnNames[i - 1] = metaData.getColumnName(i);
-            }
-
-            // Populate table model with data
-            DefaultTableModel model = new DefaultTableModel(columnNames, 0);
-            while (resultSet.next()) {
-                Object[] rowData = new Object[columnCount];
-                for (int i = 1; i <= columnCount; i++) {
-                    rowData[i - 1] = resultSet.getObject(i);
-                }
-                model.addRow(rowData);
-            }
-
-            // Set table model
-            table.setModel(model);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
+    private void show_employees() throws SQLException{
+        removeButtons();
+        ResultSet resultSet = Database.select_employee(connect);
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        int columnCount = metaData.getColumnCount();
+        String[] columnNames = new String[columnCount];
+        for (int i = 1; i <= columnCount; i++) {
+            columnNames[i - 1] = metaData.getColumnName(i);
         }
-        if(addButton != null) frame.remove(addButton);
-        if(addDrug != null) frame.remove(addDrug);
-        if(addCategoryButton != null) frame.remove(addCategoryButton);
+        // Populate table model with data
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        while (resultSet.next()) {
+            Object[] rowData = new Object[columnCount];
+            for (int i = 1; i <= columnCount; i++) {
+                rowData[i - 1] = resultSet.getObject(i);
+            }
+            model.addRow(rowData);
+        }
+
+        // Set table model
+        table.setModel(model);
+//        if(addButton != null) frame.remove(addButton);
+//        if(addDrug != null) frame.remove(addDrug);
+//        if(addCategoryButton != null) frame.remove(addCategoryButton);
         add_employee_button();
     }
 
-    private void showProducts() {
-//        frame.remove(scrollPane); // Удаляем текущую панель с таблицей
-//        table = new JTable(); // Создаем новую таблицу или обновляем существующую
-//        JScrollPane newScrollPane = new JScrollPane(table); // Создаем новую панель прокрутки с таблицей
-//        frame.add(newScrollPane, BorderLayout.CENTER); // Добавляем новую панель прокрутки в центр
-//        frame.revalidate(); // Пересчитываем компоновку
-//        frame.repaint();
-//        CategoryButton();
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
+    private void showProducts() throws SQLException{
+        removeButtons();
 
-        try {
-            // Open a connection
-            connection = DriverManager.getConnection(url, user, password);
-
-            // Create a statement
-            statement = connection.createStatement();
-            String query = "SELECT id, provider_name, company_name FROM providers"; // Example query, change it according to your database schema
-            resultSet = statement.executeQuery(query);
-
+        ResultSet resultSet = Database.select_providers(connect);
+        ResultSetMetaData metaData = resultSet.getMetaData();
             // Get column names
-            ResultSetMetaData metaData = resultSet.getMetaData();
-            int columnCount = metaData.getColumnCount();
-            String[] columnNames = new String[columnCount];
-            for (int i = 1; i <= columnCount; i++) {
-                columnNames[i - 1] = metaData.getColumnName(i);
-            }
-//            columnNames[columnCount] = "s";
-//            columnCount++;
-
-            // Populate table model with data
-            DefaultTableModel model = new DefaultTableModel(columnNames, 0);
-            while (resultSet.next()) {
-//                model.addColumn("");
-                Object[] rowData = new Object[columnCount];
-                for (int i = 1; i <= columnCount; i++) {
-//                    System.out.println(resultSet.getObject(i));
-                    rowData[i - 1] = resultSet.getObject(i);
-                }
-                model.addRow(rowData);
-            }
-            // Set table model
-            table.setModel(model);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
+        int columnCount = metaData.getColumnCount();
+        String[] columnNames = new String[columnCount];
+        for (int i = 1; i <= columnCount; i++) {
+            columnNames[i - 1] = metaData.getColumnName(i);
         }
-        if(addDrug != null) frame.remove(addDrug);
-        if (addCategoryButton != null) frame.remove(addCategoryButton);
-        if (add_employee_button != null) frame.remove(add_employee_button);
+        // Populate table model with data
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        while (resultSet.next()) {
+            Object[] rowData = new Object[columnCount];
+            for (int i = 1; i <= columnCount; i++) {
+                rowData[i - 1] = resultSet.getObject(i);
+            }
+            model.addRow(rowData);
+        }
+        table.setModel(model);
+//        if(addDrug != null) frame.remove(addDrug);
+//        if (addCategoryButton != null) frame.remove(addCategoryButton);
+//        if (add_employee_button != null) frame.remove(add_employee_button);
         showAddProductButton();
-
     }
     private void showAddProductButton() {
         addButton = new JButton("Add Provider");
@@ -364,7 +289,13 @@ public class Example {
     }
     private void show_add_drug_button(){
         addDrug = new JButton("Add Drug");
-        addDrug.addActionListener(e -> show_add_drugs_form());
+        addDrug.addActionListener(e -> {
+            try {
+                show_add_drugs_form();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
         frame.add(addDrug, BorderLayout.SOUTH);
         frame.revalidate();
         frame.repaint();
@@ -374,7 +305,13 @@ public class Example {
     }
     private void CategoryButton() {
         addCategoryButton = new JButton("Add Category");
-        addCategoryButton.addActionListener(e -> add_category_form());
+        addCategoryButton.addActionListener(e -> {
+            try {
+                add_category_form();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
         frame.add(addCategoryButton, BorderLayout.SOUTH);
         frame.revalidate();
         frame.repaint();
@@ -390,57 +327,33 @@ public class Example {
 //        if(addDrug != null) frame.remove(addDrug);
 
     }
-    private void load_provider(){
-        try(Connection connection = DriverManager.getConnection(url, user, password);
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM providers")) {
-
-            // Очищаем ComboBox перед добавлением новых элементов
-            providerComboBox.removeAllItems();
-
-            // Добавляем каждый тип категории в ComboBox
-            while (resultSet.next()) {
-                String categoryType = resultSet.getString("provider_name");
-                providerComboBox.addItem(categoryType);
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+    private void load_provider() throws SQLException{
+        ResultSet resultSet = Database.select_providers(connect);
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        // Очищаем ComboBox перед добавлением новых элементов
+        providerComboBox.removeAllItems();
+        // Добавляем каждый тип категории в ComboBox
+        while (resultSet.next()) {
+            String categoryType = resultSet.getString("provider_name");
+            providerComboBox.addItem(categoryType);
         }
     }
-    private void load_category(){
-        try(Connection connection = DriverManager.getConnection(url, user, password);
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT * FROM category")) {
-
-            // Очищаем ComboBox перед добавлением новых элементов
-//            if
-            categoryComboBox.removeAllItems();
-
-            // Добавляем каждый тип категории в ComboBox
-            while (resultSet.next()) {
-                String categoryType = resultSet.getString("category_name");
-                categoryComboBox.addItem(categoryType);
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+    private void load_category() throws SQLException{
+        ResultSet resultSet = Database.select_providers(connect);
+        categoryComboBox.removeAllItems();
+        while (resultSet.next()) {
+            String categoryType = resultSet.getString("category_name");
+            categoryComboBox.addItem(categoryType);
         }
-
     }
-    private void loadCategoryTypes() {
-        try (Connection connection = DriverManager.getConnection(url, user, password);
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT * FROM category_types")) {
-
-            // Очищаем ComboBox перед добавлением новых элементов
-            categoryTypeComboBox.removeAllItems();
-
-            // Добавляем каждый тип категории в ComboBox
-            while (resultSet.next()) {
-                String categoryType = resultSet.getString("category_type");
-                categoryTypeComboBox.addItem(categoryType);
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+    private void loadCategoryTypes() throws SQLException{
+        ResultSet resultSet = Database.select_category_types(connect);
+        // Очищаем ComboBox перед добавлением новых элементов
+        categoryTypeComboBox.removeAllItems();
+        // Добавляем каждый тип категории в ComboBox
+        while (resultSet.next()) {
+            String categoryType = resultSet.getString("category_type");
+            categoryTypeComboBox.addItem(categoryType);
         }
     }
 
@@ -456,6 +369,7 @@ public class Example {
         }
         return -1;
     }
+
     private int get_provider_id(String provider){
         try(Connection connection = DriverManager.getConnection(url, user, password);
             PreparedStatement statement = connection.prepareStatement("SELECT id FROM providers WHERE provider_name = ?")) {
@@ -482,7 +396,7 @@ public class Example {
         }
         return -1; // Если что-то пошло не так, возвращаем -1
     }
-    private void add_category_form(){
+    private void add_category_form() throws SQLException {
         JFrame add_category_frame = new JFrame("Add category");
         add_category_frame.setSize(300, 200);
         add_category_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -516,7 +430,6 @@ public class Example {
             }
         });
         add_category_frame.add(saveButton, BorderLayout.SOUTH);
-
         add_category_frame.setVisible(true);
     }
     private void showAddProductForm() {
@@ -530,7 +443,7 @@ public class Example {
         JTextField priceField = new JTextField();
         inputPanel.add(new JLabel("Name:"));
         inputPanel.add(nameField);
-        inputPanel.add(new JLabel("Price:"));
+        inputPanel.add(new JLabel("Company name:"));
         inputPanel.add(priceField);
         addProductFrame.add(inputPanel, BorderLayout.CENTER);
 
@@ -542,7 +455,11 @@ public class Example {
             if (addProduct(name, price)) {
 //                JOptionPane.showMessageDialog(addProductFrame, "Product added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 addProductFrame.dispose();
-                showProducts();
+                try {
+                    showProducts();
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
             } else {
                 JOptionPane.showMessageDialog(addProductFrame, "Error adding product", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -596,7 +513,7 @@ public class Example {
 
     }
 
-    private void show_add_drugs_form(){
+    private void show_add_drugs_form() throws SQLException {
         JFrame add_add_drugs_form = new JFrame("Add Drugs");
         add_add_drugs_form.setSize(400, 200);
         add_add_drugs_form.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

@@ -11,61 +11,82 @@ public class Database {
     private static final String password = "Beksultan-04";
 //    public static void
 
-    public static void main(String[] args) {
-        // Параметры подключения к базе данных
-        String url = "jdbc:postgresql://localhost:5432/pharmacy";
-        String user = "reatoi";
-        String password = "Beksultan-04";
+    public static void main(String[] args) throws SQLException {
+        {
+            // Параметры подключения к базе данных
+//        String url = "jdbc:postgresql://localhost:5432/pharmacy";
+//        String user = "reatoi";
+//        String password = "Beksultan-04";
+//
+//        // Переменные для соединения и выполнения запроса
+//        Connection connection = null;
+//        Statement statement = null;
+//        ResultSet resultSet = null;
+//
+//        try {
+//            // Установление соединения с базой данных
+//            connection = DriverManager.getConnection(url, user, password);
+//
+//            // Создание объекта для выполнения SQL-запросов
+//            statement = connection.createStatement();
+//
+//            // SQL-запрос для выборки данных
+//            String query = "SELECT * FROM providers";
+//
+//            // Выполнение запроса и получение результатов
+//            resultSet = statement.executeQuery(query);
+//
+//            // Обработка результатов запроса
+//            while (resultSet.next()) {
+//                // Чтение данных из результата
+//                int id = resultSet.getInt("id");
+//                String provider_name = resultSet.getString("provider_name");
+//                // Вывод данных (здесь можно провести другую обработку)
+//                System.out.println("ID: " + id + ", Name: " + provider_name);
+//            }
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        } finally {
+//            // Закрытие ресурсов
+//            try {
+//                if (resultSet != null) {
+//                    resultSet.close();
+//                }
+//                if (statement != null) {
+//                    statement.close();
+//                }
+//                if (connection != null) {
+//                    connection.close();
+//                }
+//            } catch (SQLException e) {
+//                e.printStackTrace();
+//            }
+//        }
+        }
 
-        // Переменные для соединения и выполнения запроса
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-
-        try {
-            // Установление соединения с базой данных
-            connection = DriverManager.getConnection(url, user, password);
-
-            // Создание объекта для выполнения SQL-запросов
-            statement = connection.createStatement();
-
-            // SQL-запрос для выборки данных
-            String query = "SELECT * FROM providers";
-
-            // Выполнение запроса и получение результатов
-            resultSet = statement.executeQuery(query);
-
-            // Обработка результатов запроса
-            while (resultSet.next()) {
-                // Чтение данных из результата
-                int id = resultSet.getInt("id");
-                String provider_name = resultSet.getString("provider_name");
-                // Вывод данных (здесь можно провести другую обработку)
-                System.out.println("ID: " + id + ", Name: " + provider_name);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            // Закрытие ресурсов
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        Connection connect = db_connect(url, user, password);
+        ResultSet auth = get_auth_employee(connect, "reatoi", "Beksultan-04");
+        while (auth.next()) {
+            // Чтение данных из результата
+            int id = auth.getInt("id");
+            String userna = auth.getString("username");
+            // Вывод данных (здесь можно провести другую обработку)
+            System.out.println("ID: " + id + ", Name: " + userna);
         }
     }
 
     public static Connection db_connect(String url, String  user, String pwd) throws SQLException {
         Connection connection = DriverManager.getConnection(url, user, password);
         return connection;
+    }
+    public static int get_category_id(Connection connect, String category) throws SQLException{
+        String query = "SELECT id FROM category WHERE category_name = ?";
+        PreparedStatement statement = connect.prepareStatement(query);
+        statement.setString(1, category);
+        try(ResultSet resultSet = statement.executeQuery()){
+            if(resultSet.next()) return resultSet.getInt("id");
+        }
+        return -1;
     }
     public static ResultSet select_category(Connection connect) throws SQLException {
         String query = "SELECT category.category_name, category_types.category_type, category_type_id FROM category inner join category_types ON category.category_type_id=category_types.id"; // Example query, change it according to your database schema
@@ -102,9 +123,9 @@ public class Database {
         PreparedStatement preparedStatement = connect.prepareStatement(query);
         preparedStatement.setString(1, users);
         preparedStatement.setString(2, pswd);
-        Statement statement = connect.createStatement();
-        System.out.println(statement.executeQuery(query).next());
-        return statement.executeQuery(query);
+//        Statement statement = connect.createStatement();
+//        System.out.println(statement.executeQuery(query).next());
+        return preparedStatement.executeQuery();
     }
 
     public static int insert_providers(Connection connect, String name, String price) throws SQLException{
