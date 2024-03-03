@@ -335,7 +335,7 @@ public class Example {
         }
     }
     private void load_category() throws SQLException{
-        ResultSet resultSet = Database.select_providers(connect);
+        ResultSet resultSet = Database.select_category(connect);
         categoryComboBox.removeAllItems();
         while (resultSet.next()) {
             String categoryType = resultSet.getString("category_name");
